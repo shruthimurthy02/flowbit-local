@@ -1,0 +1,34 @@
+{
+  "name": "flowbit-intern-assignment",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "services/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "db:migrate": "npx prisma migrate dev",
+    "db:seed": "npx ts-node prisma/seed.ts",
+    "db:studio": "npx prisma studio",
+    "db:generate": "npx prisma generate",
+    "db:reset": "npx prisma migrate reset"
+  },
+  "devDependencies": {
+    "@turbo/gen": "^1.10.12",
+    "prettier": "^3.0.3",
+    "prisma": "^6.19.0",
+    "turbo": "^1.10.12",
+    "typescript": "^5.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.19.0"
+  }
+}

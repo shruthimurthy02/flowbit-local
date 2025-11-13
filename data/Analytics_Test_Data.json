@@ -1,0 +1,201 @@
+{
+  "vendors": [
+    {
+      "id": "vendor-1",
+      "name": "Tech Solutions Inc",
+      "email": "contact@techsolutions.com",
+      "phone": "+1-555-0101",
+      "address": "123 Tech Street, San Francisco, CA"
+    },
+    {
+      "id": "vendor-2",
+      "name": "Office Supplies Co",
+      "email": "sales@officesupplies.com",
+      "phone": "+1-555-0102",
+      "address": "456 Business Ave, New York, NY"
+    },
+    {
+      "id": "vendor-3",
+      "name": "Marketing Pro",
+      "email": "hello@marketingpro.com",
+      "phone": "+1-555-0103",
+      "address": "789 Marketing Blvd, Los Angeles, CA"
+    }
+  ],
+  "customers": [
+    {
+      "id": "customer-1",
+      "name": "Acme Corporation",
+      "email": "billing@acme.com",
+      "phone": "+1-555-0201",
+      "address": "100 Corporate Drive, Boston, MA"
+    },
+    {
+      "id": "customer-2",
+      "name": "Global Industries",
+      "email": "accounts@globalind.com",
+      "phone": "+1-555-0202",
+      "address": "200 Industry Way, Chicago, IL"
+    },
+    {
+      "id": "customer-3",
+      "name": "Startup Ventures",
+      "email": "finance@startupventures.com",
+      "phone": "+1-555-0203",
+      "address": "300 Innovation Road, Austin, TX"
+    }
+  ],
+  "invoices": [
+    {
+      "id": "inv-001",
+      "invoiceNumber": "INV-2024-001",
+      "vendorId": "vendor-1",
+      "customerId": "customer-1",
+      "issueDate": "2024-01-15T00:00:00Z",
+      "dueDate": "2024-02-15T00:00:00Z",
+      "status": "paid",
+      "subtotal": 5000.00,
+      "tax": 500.00,
+      "total": 5500.00,
+      "notes": "Q1 Software License",
+      "lineItems": [
+        {
+          "description": "Enterprise Software License",
+          "category": "Software",
+          "quantity": 1,
+          "unitPrice": 5000.00,
+          "amount": 5000.00
+        }
+      ],
+      "payments": [
+        {
+          "amount": 5500.00,
+          "paymentDate": "2024-02-10T00:00:00Z",
+          "method": "bank_transfer",
+          "reference": "TXN-2024-001"
+        }
+      ]
+    },
+    {
+      "id": "inv-002",
+      "invoiceNumber": "INV-2024-002",
+      "vendorId": "vendor-2",
+      "customerId": "customer-1",
+      "issueDate": "2024-01-20T00:00:00Z",
+      "dueDate": "2024-02-20T00:00:00Z",
+      "status": "paid",
+      "subtotal": 1200.00,
+      "tax": 120.00,
+      "total": 1320.00,
+      "notes": "Office supplies for Q1",
+      "lineItems": [
+        {
+          "description": "Office Chairs",
+          "category": "Furniture",
+          "quantity": 10,
+          "unitPrice": 100.00,
+          "amount": 1000.00
+        },
+        {
+          "description": "Desk Supplies",
+          "category": "Supplies",
+          "quantity": 1,
+          "unitPrice": 200.00,
+          "amount": 200.00
+        }
+      ],
+      "payments": [
+        {
+          "amount": 1320.00,
+          "paymentDate": "2024-02-18T00:00:00Z",
+          "method": "credit_card",
+          "reference": "CC-2024-002"
+        }
+      ]
+    },
+    {
+      "id": "inv-003",
+      "invoiceNumber": "INV-2024-003",
+      "vendorId": "vendor-3",
+      "customerId": "customer-2",
+      "issueDate": "2024-02-01T00:00:00Z",
+      "dueDate": "2024-03-01T00:00:00Z",
+      "status": "pending",
+      "subtotal": 8000.00,
+      "tax": 800.00,
+      "total": 8800.00,
+      "notes": "Marketing campaign Q1",
+      "lineItems": [
+        {
+          "description": "Digital Marketing Campaign",
+          "category": "Marketing",
+          "quantity": 1,
+          "unitPrice": 6000.00,
+          "amount": 6000.00
+        },
+        {
+          "description": "Content Creation",
+          "category": "Marketing",
+          "quantity": 1,
+          "unitPrice": 2000.00,
+          "amount": 2000.00
+        }
+      ],
+      "payments": []
+    },
+    {
+      "id": "inv-004",
+      "invoiceNumber": "INV-2024-004",
+      "vendorId": "vendor-1",
+      "customerId": "customer-2",
+      "issueDate": "2024-02-10T00:00:00Z",
+      "dueDate": "2024-03-10T00:00:00Z",
+      "status": "paid",
+      "subtotal": 3000.00,
+      "tax": 300.00,
+      "total": 3300.00,
+      "notes": "Cloud hosting services",
+      "lineItems": [
+        {
+          "description": "Cloud Hosting - Monthly",
+          "category": "Infrastructure",
+          "quantity": 3,
+          "unitPrice": 1000.00,
+          "amount": 3000.00
+        }
+      ],
+      "payments": [
+        {
+          "amount": 3300.00,
+          "paymentDate": "2024-03-05T00:00:00Z",
+          "method": "bank_transfer",
+          "reference": "TXN-2024-004"
+        }
+      ]
+    },
+    {
+      "id": "inv-005",
+      "invoiceNumber": "INV-2024-005",
+      "vendorId": "vendor-2",
+      "customerId": "customer-3",
+      "issueDate": "2024-02-15T00:00:00Z",
+      "dueDate": "2024-03-15T00:00:00Z",
+      "status": "overdue",
+      "subtotal": 2500.00,
+      "tax": 250.00,
+      "total": 2750.00,
+      "notes": "Equipment purchase",
+      "lineItems": [
+        {
+          "description": "Laptops",
+          "category": "Hardware",
+          "quantity": 5,
+          "unitPrice": 500.00,
+          "amount": 2500.00
+        }
+      ],
+      "payments": []
+    }
+  ]
+}
+

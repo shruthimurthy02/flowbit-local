@@ -1,0 +1,48 @@
+services:
+  # Backend API Service
+  - type: web
+    name: flowbit-api
+    env: node
+    plan: free
+    region: oregon
+    buildCommand: cd apps/api && npm install && npx prisma generate && npm run build
+    startCommand: cd apps/api && npm start
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: VANNA_API_BASE_URL
+        value: https://flowbit-vanna.onrender.com
+      - key: PORT
+        value: 3001
+      - key: NODE_ENV
+        value: production
+      - key: ALLOWED_ORIGINS
+        value: https://flowbit.vercel.app,https://flowbit-git-main-*.vercel.app
+    healthCheckPath: /health
+
+  # Vanna AI Service
+  - type: web
+    name: flowbit-vanna
+    env: python
+    plan: free
+    region: oregon
+    buildCommand: cd services/vanna && pip install -r requirements.txt
+    startCommand: cd services/vanna && uvicorn app:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: PORT
+        value: 8000
+      - key: VANNA_MAX_ROWS
+        value: 200
+    healthCheckPath: /status
+
+  # PostgreSQL Database
+  - type: pg
+    name: flowbit-db
+    plan: free
+    region: oregon
+    databaseName: flowbit_db
+    user: flowbit_user

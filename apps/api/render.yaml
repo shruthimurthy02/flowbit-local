@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: flowbit-api
+    env: node
+    plan: free
+    region: oregon
+    buildCommand: npm install && npx prisma generate && npm run build
+    startCommand: npm start
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: VANNA_API_BASE_URL
+        value: https://flowbit-vanna.onrender.com
+      - key: PORT
+        value: 3001
+      - key: NODE_ENV
+        value: production
+      - key: ALLOWED_ORIGINS
+        value: https://flowbit.vercel.app
+    healthCheckPath: /health
+
