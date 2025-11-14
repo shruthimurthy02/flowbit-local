@@ -33,7 +33,9 @@ app.use(
 app.use(express.json());
 
 // ✅ Health check endpoints
-app.get("/", (_req, res) => res.json({ ok: true, message: "Flowbit API running" }));
+app.get("/", (_req, res) =>
+  res.json({ ok: true, message: "Flowbit API running" })
+);
 app.get("/health", (_req, res) => res.json({ status: "ok" }));
 
 // ✅ Mount all route modules
@@ -55,7 +57,9 @@ app.post("/chat-with-data-legacy", async (req, res) => {
       return res.status(400).json({ error: "Missing query or question field" });
     }
 
-    const vannaUrl = `${process.env.VANNA_API_BASE_URL || "http://localhost:8000"}/query`;
+    const vannaUrl = `${
+      process.env.VANNA_API_BASE_URL || "http://localhost:8000"
+    }/query`;
 
     const response = await axios.post(
       vannaUrl,
@@ -69,50 +73,59 @@ app.post("/chat-with-data-legacy", async (req, res) => {
     const payload = response.data;
 
     if (payload?.status === "success") {
-      res.json({ sql: userQuery, results: payload.rows || payload.results || [] });
-      return;
+      return res.json({
+        sql: userQuery,
+        results: payload.rows || payload.results || [],
+      });
     }
 
     res.json(payload);
   } catch (error: any) {
     console.error("❌ Chat proxy error:", error.message);
+
     if (error.response) {
-      res.status(error.response.status || 500).json({
+      return res.status(error.response.status || 500).json({
         error: "Chat service error",
         message: error.response.data?.error || error.message,
       });
     } else if (error.request) {
-      res.status(503).json({
+      return res.status(503).json({
         error: "Chat service unavailable",
         message: "Cannot connect to Vanna service",
       });
-    } else {
-      res.status(500).json({
-        error: "Chat proxy failed",
-        message: error.message,
-      });
     }
+
+    res.status(500).json({
+      error: "Chat proxy failed",
+      message: error.message,
+    });
   }
 });
 
 // ✅ Global error handler
-app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-  console.error("❌ Uncaught API error:", err);
-  res.status(500).json({ error: "Internal server error", details: err.message });
+app.use(
+  (err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+    console.error("❌ Uncaught API error:", err);
+    res.status(500).json({
+      error: "Internal server error",
+      details: err.message,
+    });
+  }
+);
+
+// ===================================================
+// 🚀 FIX FOR RENDER DEPLOYMENT
+// ===================================================
+const PORT = Number(process.env.PORT) || 3001;
+
+// 🟢 MUST LISTEN ON ALL NETWORK INTERFACES
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`🚀 Flowbit API running on http://0.0.0.0:${PORT}`);
 });
 
-// ✅ Start server (when run directly)
-const PORT = process.env.PORT || 3001;
-if (require.main === module) {
-  app.listen(PORT, () => {
-    console.log(`🚀 Flowbit API running at http://localhost:${PORT}`);
-  });
-}
-
-// ✅ Export app for testing or serverless hosting
 export default app;
 
-// ✅ Graceful shutdown
+// Graceful shutdown
 process.on("SIGINT", async () => {
   await prisma.$disconnect();
   process.exit(0);
@@ -122,3 +135,4 @@ process.on("SIGTERM", async () => {
   await prisma.$disconnect();
   process.exit(0);
 });
+
