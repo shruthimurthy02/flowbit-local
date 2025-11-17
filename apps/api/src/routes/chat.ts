@@ -29,9 +29,18 @@ router.post("/", async (req: Request, res: Response) => {
     if (payload?.status === "success") {
       res.json({
         sql: userQuestion,
+        notes: payload.answer || "Query executed successfully",
         results: payload.rows || payload.results || [],
       });
       return;
+    }
+
+    // Handle error responses
+    if (payload?.status === "error") {
+      return res.status(500).json({
+        error: "Vanna query failed",
+        message: payload.message || "Unknown error",
+      });
     }
 
     res.json(payload);
