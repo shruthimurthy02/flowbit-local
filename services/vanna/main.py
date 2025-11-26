@@ -5,8 +5,8 @@ from typing import Optional
 from fastapi import FastAPI, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-import psycopg2
-from psycopg2.extras import RealDictCursor
+from psycopg import connect, Error
+from psycopg.rows import dict_row
 import httpx
 from dotenv import load_dotenv
 
@@ -188,8 +188,8 @@ def execute_sql_readonly(sql: str, max_rows: int = 200) -> list:
         raise HTTPException(status_code=400, detail="Invalid SQL: Only SELECT queries are allowed")
     
     try:
-        conn = psycopg2.connect(DATABASE_URL)
-        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        conn = connect(DATABASE_URL)
+        cursor = conn.cursor(row_factory=dict_row)
         
         # Add LIMIT if not present and query might return many rows
         if "LIMIT" not in sql.upper():
@@ -206,7 +206,7 @@ def execute_sql_readonly(sql: str, max_rows: int = 200) -> list:
         
         return rows
         
-    except psycopg2.Error as e:
+    except Error as e:
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error executing query: {str(e)}")
