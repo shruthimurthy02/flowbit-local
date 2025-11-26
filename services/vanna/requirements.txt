@@ -1,6 +1,6 @@
 fastapi
-uvicorn[standard]
-httpx
-psycopg2-binary
+uvicorn
 python-dotenv
-pydantic
+httpx
+psycopg[binary]
+
