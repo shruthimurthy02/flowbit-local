@@ -1,39 +1,38 @@
-import { Router } from "express";
-import type { PrismaClient } from "@prisma/client";
+﻿import { Router } from "express";
+import prisma from "../utils/prisma";
 
-export default function createStatsRouter(prisma: PrismaClient) {
-  const router = Router();
+const router = Router();
 
-  router.get("/", async (_req, res) => {
-    try {
-      const [invoiceCount, spendAggregate, averageAggregate, pendingCount, paidCount, overdueCount] =
-        await Promise.all([
-          prisma.invoice.count(),
-          prisma.invoice.aggregate({ _sum: { totalAmount: true } }),
-          prisma.invoice.aggregate({ _avg: { totalAmount: true } }),
-          prisma.invoice.count({ where: { status: { equals: "pending" } } }),
-          prisma.invoice.count({ where: { status: { equals: "paid" } } }),
-          prisma.invoice.count({ where: { status: { equals: "overdue" } } }),
-        ]);
+/**
+ * GET /stats
+ */
+router.get("/", async (_req, res) => {
+  try {
+    const now = new Date();
+    const startOfYear = new Date(now.getFullYear(), 0, 1);
 
-      const totalSpend = Number(spendAggregate._sum.totalAmount || 0);
-      const averageInvoiceValue = Number(averageAggregate._avg.totalAmount || 0);
+    const totalSpend = await prisma.invoice.aggregate({
+      _sum: { totalAmount: true },
+      where: { issueDate: { gte: startOfYear } },
+    });
 
-      res.json({
-        totalSpend: Number(totalSpend.toFixed(2)),
-        totalInvoicesProcessed: invoiceCount,
-        documentsUploaded: invoiceCount,
-        averageInvoiceValue: Number(averageInvoiceValue.toFixed(2)),
-        pendingInvoices: pendingCount,
-        paidInvoices: paidCount,
-        overdueInvoices: overdueCount,
-      });
-    } catch (err) {
-      console.error("Error fetching stats:", err);
-      const message = err instanceof Error ? err.message : "Unknown error";
-      res.status(500).json({ error: "Failed to fetch stats", message });
-    }
-  });
+    const totalInvoices = await prisma.invoice.count();
 
-  return router;
-}
+    const avg = await prisma.invoice.aggregate({
+      _avg: { totalAmount: true },
+    });
+
+    res.json({
+      totalSpend: totalSpend._sum.totalAmount ?? 0,
+      totalInvoicesProcessed: totalInvoices,
+      documentsUploaded: 0,
+      averageInvoiceValue: avg._avg.totalAmount ?? 0,
+    });
+
+  } catch (err) {
+    console.error("❌ stats route error:", err);
+    res.status(500).json({ error: "Failed to fetch stats" });
+  }
+});
+
+export default router;

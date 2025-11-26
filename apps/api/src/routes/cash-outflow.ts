@@ -1,65 +1,38 @@
-import { Router } from "express";
-import type { PrismaClient } from "@prisma/client";
+﻿import { Router } from "express";
+import prisma from "../utils/prisma";
 
-export default function createCashOutflowRouter(prisma: PrismaClient) {
-  const router = Router();
+/**
+ * GET /cash-outflow?days=30
+ * Returns expected cash outflow aggregated by day for the next N days (default 30)
+ */
+const router = Router();
 
-  router.get("/", async (_req, res) => {
-    try {
-      const unpaidInvoices = await prisma.invoice.findMany({
-        where: {
-          status: {
-            notIn: ["paid", "complete"],
-          },
-        },
-        select: {
-          date: true,
-          totalAmount: true,
-        },
-        orderBy: { date: "asc" },
-      });
+router.get("/", async (req, res) => {
+  try {
+    const days = parseInt(String(req.query.days || "30"), 10);
+    const start = new Date();
+    const end = new Date();
+    end.setDate(start.getDate() + days);
 
-      const now = new Date();
-      const outflowMap: Record<string, { totalAmount: number; invoiceCount: number }> = {
-        Overdue: { totalAmount: 0, invoiceCount: 0 },
-        "This Month": { totalAmount: 0, invoiceCount: 0 },
-        "Next 3 Months": { totalAmount: 0, invoiceCount: 0 },
-        "Next 6 Months": { totalAmount: 0, invoiceCount: 0 },
-        "Beyond 6 Months": { totalAmount: 0, invoiceCount: 0 },
-      };
+    const data = await prisma.invoice.findMany({
+      where: { dueDate: { gte: start, lte: end } },
+      select: { dueDate: true, totalAmount: true }
+    });
 
-      unpaidInvoices.forEach((invoice) => {
-        const dueDate = new Date(invoice.date);
-        dueDate.setDate(dueDate.getDate() + 30);
+    // aggregate by date
+    const map = new Map();
+    data.forEach((row) => {
+      const d = new Date(row.dueDate).toISOString().slice(0, 10);
+      map.set(d, (map.get(d) || 0) + Number(row.totalAmount));
+    });
 
-        const daysFromNow = Math.ceil((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    const result = Array.from(map.entries()).map(([date, total]) => ({ date, total }));
 
-        let bucket: keyof typeof outflowMap;
-        if (daysFromNow < 0) bucket = "Overdue";
-        else if (daysFromNow <= 30) bucket = "This Month";
-        else if (daysFromNow <= 90) bucket = "Next 3 Months";
-        else if (daysFromNow <= 180) bucket = "Next 6 Months";
-        else bucket = "Beyond 6 Months";
+    res.json(result.sort((a, b) => a.date.localeCompare(b.date)));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch cash outflow" });
+  }
+});
 
-        outflowMap[bucket].totalAmount += Number(invoice.totalAmount || 0);
-        outflowMap[bucket].invoiceCount += 1;
-      });
-
-      const response = Object.entries(outflowMap)
-        .filter(([, data]) => data.invoiceCount > 0)
-        .map(([dueDateRange, data]) => ({
-          dueDateRange,
-          totalAmount: Number(data.totalAmount.toFixed(2)),
-          invoiceCount: data.invoiceCount,
-        }));
-
-      res.json(response);
-    } catch (err) {
-      console.error("Error fetching cash outflow:", err);
-      const message = err instanceof Error ? err.message : "Unknown error";
-      res.status(500).json({ error: "Failed to fetch cash outflow", message });
-    }
-  });
-
-  return router;
-}
+export default router;

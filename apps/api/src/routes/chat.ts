@@ -1,56 +1,53 @@
-import express, { Request, Response } from "express";
-import axios from "axios";
+﻿import { Router } from "express";
+import fetch from "node-fetch";
+import prisma from "../utils/prisma";
 
-const router = express.Router();
-const VANNA_API_BASE_URL = process.env.VANNA_API_BASE_URL || "http://localhost:8000";
+const router = Router();
 
-router.post("/", async (req: Request, res: Response) => {
+/**
+ * POST /chat-with-data
+ * Body: { prompt: string }
+ * Forwards the prompt to VANNA_API_BASE_URL (env) and returns { sql, rows }
+ */
+router.post("/", async (req, res) => {
   try {
-    const { question, query } = req.body;
-    const userQuestion = question || query;
+    const { prompt } = req.body;
+    if (!prompt) return res.status(400).json({ error: "Missing prompt" });
 
-    if (!userQuestion) {
-      return res.status(400).json({ error: "Missing question or query field" });
-    }
+    const VANNA = process.env.VANNA_API_BASE_URL || "http://localhost:8000";
+    const key = process.env.VANNA_API_KEY || "";
 
-    const response = await axios.post(
-      `${VANNA_API_BASE_URL}/query`,
-      { query: userQuestion },
-      {
-        timeout: 30000,
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    );
-
-    const payload = response.data;
-
-    if (payload?.status === "success") {
-      res.json({
-        sql: userQuestion,
-        notes: payload.answer || "Query executed successfully",
-        results: payload.rows || payload.results || [],
-      });
-      return;
-    }
-
-    // Handle error responses
-    if (payload?.status === "error") {
-      return res.status(500).json({
-        error: "Vanna query failed",
-        message: payload.message || "Unknown error",
-      });
-    }
-
-    res.json(payload);
-  } catch (err: any) {
-    console.error("Error proxying to Vanna:", err.message);
-    res.status(500).json({
-      error: "Chat proxy failed",
-      details: err.message,
-      vannaUrl: VANNA_API_BASE_URL,
+    // forward to vanna /query (assumes Vanna returns { sql: string })
+    const r = await fetch(`${VANNA}/query`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(key ? { "Authorization": `Bearer ${key}` } : {})
+      },
+      body: JSON.stringify({ prompt })
     });
+
+    if (!r.ok) {
+      const txt = await r.text();
+      return res.status(502).json({ error: "Vanna error", details: txt });
+    }
+
+    const json = await r.json();
+    // expected { sql: "...", rows?: [...] } from Vanna
+    const sql = json.sql ?? json.query ?? null;
+    const rowsFromVanna = json.rows ?? null;
+
+    if (!sql) {
+      return res.json({ sql: null, rows: rowsFromVanna ?? [], message: "Vanna did not return SQL" });
+    }
+
+    // Execute the generated SQL directly using Prisma.$queryRawUnsafe
+    const rows = await prisma.$queryRawUnsafe(sql);
+
+    res.json({ sql, rows });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Chat proxy failed", details: err.message });
   }
 });
 

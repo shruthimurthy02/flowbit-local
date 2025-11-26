@@ -1,49 +1,38 @@
-import { Router } from "express";
-import type { PrismaClient } from "@prisma/client";
+﻿import { Router } from "express";
+import prisma from "../utils/prisma";
 
-export default function createVendorsRouter(prisma: PrismaClient) {
-  const router = Router();
+const router = Router();
 
-  router.get("/top10", async (_req, res) => {
-    try {
-      const invoices = await prisma.invoice.findMany({
-        include: {
-          vendor: { select: { id: true, name: true } },
-        },
-      });
+router.get("/top10", async (req, res) => {
+  try {
+    const limit = parseInt(String(req.query.limit || "10"));
 
-      const vendorMap: Record<number, { name: string; totalSpend: number; invoiceCount: number }> = {};
+    const result = await prisma.invoice.groupBy({
+      by: ["vendorId"],
+      _sum: { totalAmount: true },
+      orderBy: { _sum: { totalAmount: "desc" } },
+      take: limit,
+    });
 
-      invoices.forEach((invoice) => {
-        if (!invoice.vendor) return;
-        const vendorId = invoice.vendor.id;
-        if (!vendorMap[vendorId]) {
-          vendorMap[vendorId] = {
-            name: invoice.vendor.name,
-            totalSpend: 0,
-            invoiceCount: 0,
-          };
-        }
-        vendorMap[vendorId].totalSpend += Number(invoice.totalAmount || 0);
-        vendorMap[vendorId].invoiceCount += 1;
-      });
+    const vendors = await Promise.all(
+      result.map(async (r) => {
+        const vendor = await prisma.vendor.findUnique({
+          where: { id: r.vendorId },
+        });
+        return {
+          vendorId: r.vendorId,
+          vendorName: vendor?.name ?? "Unknown",
+          totalAmount: r._sum.totalAmount ?? 0,
+        };
+      })
+    );
 
-      const topVendors = Object.values(vendorMap)
-        .map((vendor) => ({
-          vendor: vendor.name,
-          totalSpend: Number(vendor.totalSpend.toFixed(2)),
-          invoiceCount: vendor.invoiceCount,
-        }))
-        .sort((a, b) => b.totalSpend - a.totalSpend)
-        .slice(0, 10);
+    res.json(vendors);
+  } catch (err) {
+    console.error("❌ vendors error:", err);
+    res.status(500).json({ error: "Failed to fetch top vendors" });
+  }
+});
 
-      res.json(topVendors);
-    } catch (err) {
-      console.error("Error fetching top vendors:", err);
-      const message = err instanceof Error ? err.message : "Unknown error";
-      res.status(500).json({ error: "Failed to fetch top vendors", message });
-    }
-  });
+export default router;
 
-  return router;
-}

@@ -1,45 +1,40 @@
-import { Router } from "express";
-import type { PrismaClient } from "@prisma/client";
+﻿import { Router } from "express";
+import prisma from "../utils/prisma";
 
-export default function createInvoiceTrendsRouter(prisma: PrismaClient) {
-  const router = Router();
+const router = Router();
 
-  router.get("/", async (_req, res) => {
-    try {
-      const invoices = await prisma.invoice.findMany({
-        select: {
-          date: true,
-          totalAmount: true,
-        },
-        orderBy: { date: "asc" },
+router.get("/", async (req, res) => {
+  try {
+    const months = parseInt(String(req.query.months || "12"));
+    const now = new Date();
+
+    const results = [];
+
+    for (let i = months - 1; i >= 0; i--) {
+      const start = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const end = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
+
+      const agg = await prisma.invoice.aggregate({
+        where: { issueDate: { gte: start, lt: end } },
+        _count: { id: true },
+        _sum: { totalAmount: true },
       });
 
-      const trendsMap: Record<string, { invoiceCount: number; totalSpend: number }> = {};
-
-      invoices.forEach((invoice) => {
-        const month = `${invoice.date.getFullYear()}-${String(invoice.date.getMonth() + 1).padStart(2, "0")}`;
-        if (!trendsMap[month]) {
-          trendsMap[month] = { invoiceCount: 0, totalSpend: 0 };
-        }
-        trendsMap[month].invoiceCount += 1;
-        trendsMap[month].totalSpend += Number(invoice.totalAmount || 0);
+      results.push({
+        month: `${start.getFullYear()}-${String(
+          start.getMonth() + 1
+        ).padStart(2, "0")}`,
+        invoiceCount: agg._count.id ?? 0,
+        totalAmount: agg._sum.totalAmount ?? 0,
       });
-
-      const response = Object.entries(trendsMap)
-        .map(([month, data]) => ({
-          month,
-          invoiceCount: data.invoiceCount,
-          totalSpend: Number(data.totalSpend.toFixed(2)),
-        }))
-        .sort((a, b) => a.month.localeCompare(b.month));
-
-      res.json(response);
-    } catch (err) {
-      console.error("Error fetching invoice trends:", err);
-      const message = err instanceof Error ? err.message : "Unknown error";
-      res.status(500).json({ error: "Failed to fetch invoice trends", message });
     }
-  });
 
-  return router;
-}
+    res.json(results);
+  } catch (err) {
+    console.error("❌ invoice-trends error:", err);
+    res.status(500).json({ error: "Failed to fetch invoice trends" });
+  }
+});
+
+export default router;
+

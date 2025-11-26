@@ -7,47 +7,103 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+/// High-level category for grouping invoices (e.g. Software, Utilities)
+model Category {
+  id       String    @id @default(uuid())
+  name     String    @unique
+  invoices Invoice[]
+}
+
+/// Entity you pay money to (vendor/supplier)
 model Vendor {
-  id          Int        @id @default(autoincrement())
-  name        String     @unique
-  category    String?
-  invoices    Invoice[]
+  id       String    @id @default(uuid())
+  name     String
+  email    String?
+  phone    String?
+  address  String?
+  invoices Invoice[]
 }
 
+/// Entity that receives invoices (customer)
 model Customer {
-  id          Int        @id @default(autoincrement())
-  name        String
-  email       String?
-  invoices    Invoice[]
+  id       String    @id @default(uuid())
+  name     String
+  email    String?
+  phone    String?
+  address  String?
+  invoices Invoice[]
 }
 
+/// Top-level invoice record
 model Invoice {
-  id            Int          @id @default(autoincrement())
-  invoiceNumber String       @unique
-  vendorId      Int
-  customerId    Int
-  date          DateTime
-  totalAmount   Float
-  status        String
-  payments      Payment[]
-  lineItems     LineItem[]
-  vendor        Vendor       @relation(fields: [vendorId], references: [id], onDelete: Cascade)
-  customer      Customer     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  id            String         @id @default(uuid())
+  invoiceNumber String         @unique
+
+  vendorId   String
+  customerId String?
+  categoryId String?
+
+  issueDate DateTime           @default(now())
+  dueDate   DateTime?
+
+  status       InvoiceStatus   @default(PENDING)
+  subtotal     Decimal         @default(0)
+  tax          Decimal         @default(0)
+  totalAmount  Decimal         @default(0)
+  notes        String?
+
+  vendor   Vendor    @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  customer Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  category Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  lineItems LineItem[]
+  payments  Payment[]
+
+  @@index([vendorId])
+  @@index([customerId])
+  @@index([categoryId])
+  @@index([issueDate])
+  @@index([dueDate])
+  @@index([status])
 }
 
-model Payment {
-  id         Int       @id @default(autoincrement())
-  invoiceId  Int
-  date       DateTime?
-  amount     Float
-  invoice    Invoice   @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-}
-
+/// Individual line items within an invoice
 model LineItem {
-  id         Int       @id @default(autoincrement())
-  invoiceId  Int
-  description String
-  quantity   Int
-  unitPrice  Float
-  invoice    Invoice   @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  id          String   @id @default(uuid())
+  invoiceId   String
+
+  description String?
+  category    String?
+  quantity    Decimal  @default(1)
+  unitPrice   Decimal  @default(0)
+  amount      Decimal  @default(0)
+  tax         Decimal  @default(0)
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+}
+
+/// Payments applied to an invoice
+model Payment {
+  id         String   @id @default(uuid())
+  invoiceId  String
+
+  amount     Decimal
+  paymentDate DateTime  @default(now())
+  method     String?
+  reference  String?
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+  @@index([paymentDate])
+}
+
+/// Enum for invoice lifecycle status
+enum InvoiceStatus {
+  PENDING
+  PAID
+  OVERDUE
+  CANCELLED
 }

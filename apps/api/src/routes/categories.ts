@@ -1,52 +1,47 @@
-import { Router } from "express";
-import type { PrismaClient } from "@prisma/client";
+﻿import { Router } from "express";
+import prisma from "../utils/prisma";
 
-export default function createCategoryRouter(prisma: PrismaClient) {
-  const router = Router();
+const router = Router();
 
-  router.get("/", async (_req, res) => {
-    try {
-      const vendors = await prisma.vendor.findMany({
-        select: {
-          name: true,
-          category: true,
-          invoices: {
-            select: {
-              totalAmount: true,
-            },
-          },
-        },
-      });
+/**
+ * GET /category-spend
+ * Returns spend grouped by category
+ */
+router.get("/", async (req, res) => {
+  try {
+    // Group by scalar field: categoryId
+    const grouped = await prisma.invoice.groupBy({
+      by: ["categoryId"],
+      _sum: { totalAmount: true },
+      orderBy: {
+        _sum: { totalAmount: "desc" }
+      }
+    });
 
-      const categoryMap: Record<string, { totalSpend: number; invoiceCount: number }> = {};
+    // Join category details
+    const result = await Promise.all(
+      grouped.map(async (g) => {
+        const category = g.categoryId
+          ? await prisma.category.findUnique({ where: { id: g.categoryId } })
+          : null;
 
-      vendors.forEach((vendor) => {
-        const category = vendor.category || "Uncategorized";
-        if (!categoryMap[category]) {
-          categoryMap[category] = { totalSpend: 0, invoiceCount: 0 };
-        }
+        return {
+          categoryId: g.categoryId,
+          categoryName: category?.name ?? "Uncategorised",
+          totalAmount: g._sum.totalAmount ?? 0
+        };
+      })
+    );
 
-        vendor.invoices.forEach((invoice) => {
-          categoryMap[category].totalSpend += Number(invoice.totalAmount || 0);
-          categoryMap[category].invoiceCount += 1;
-        });
-      });
+    res.json(result);
+  } catch (err) {
+    console.error("CATEGORY ERROR:", err);
+    res.status(500).json({ error: "Failed to fetch category spend" });
+  }
+});
 
-      const response = Object.entries(categoryMap)
-        .map(([category, data]) => ({
-          category,
-          totalSpend: Number(data.totalSpend.toFixed(2)),
-          invoiceCount: data.invoiceCount,
-        }))
-        .sort((a, b) => b.totalSpend - a.totalSpend);
+export default router;
 
-      res.json(response);
-    } catch (err) {
-      console.error("Error fetching category spend:", err);
-      const message = err instanceof Error ? err.message : "Unknown error";
-      res.status(500).json({ error: "Failed to fetch category spend", message });
-    }
-  });
 
-  return router;
-}
+
+
