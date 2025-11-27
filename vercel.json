@@ -1,6 +1,7 @@
 {
   "version": 2,
   "buildCommand": "SKIP_TS_CHECK=1 turbo build",
+  "framework": null,
   "env": {
     "SKIP_TS_CHECK": "1"
   }
