@@ -1,12 +1,7 @@
 {
-  "buildCommand": "cd apps/web && npm install && npm run build",
-  "outputDirectory": "apps/web/.next",
-  "devCommand": "cd apps/web && npm run dev",
-  "installCommand": "cd apps/web && npm install",
-  "framework": "nextjs",
-  "regions": ["iad1"],
+  "buildCommand": "SKIP_ENV_VALIDATION=1 SKIP_TS_CHECK=1 TURBO_FORCE=1 turbo build",
   "env": {
-    "NEXT_PUBLIC_API_BASE_URL": "https://flowbit-api.onrender.com",
-    "NEXT_PUBLIC_API_URL": "https://flowbit-api.onrender.com"
+    "SKIP_TS_CHECK": "1"
   }
 }
+

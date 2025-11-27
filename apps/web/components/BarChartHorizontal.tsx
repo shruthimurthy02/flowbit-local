@@ -55,3 +55,4 @@ export default function BarChartHorizontal({ data }: { data: any[] }) {
     </div>
   );
 }
+

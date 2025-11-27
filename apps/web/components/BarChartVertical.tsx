@@ -56,3 +56,4 @@ export default function BarChartVertical({ data }: { data: any[] }) {
     </div>
   );
 }
+

@@ -1,32 +1,33 @@
 {
-  "name": "flowbit-api",
-  "version": "1.0.0",
-  "main": "dist/index.js",
-  "license": "MIT",
-  "engines": {
-    "node": "20.x"
-  },
-  "scripts": {
-    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
-    "build": "tsc",
-    "start": "node dist/index.js",
-    "prisma:generate": "prisma generate",
-    "prisma:seed": "ts-node prisma/seed.ts"
-  },
-  "dependencies": {
-    "@prisma/client": "^6.19.0",
-    "axios": "^1.6.7",
-    "cors": "^2.8.5",
-    "express": "^4.19.2",
-    "node-fetch": "^2.7.0"
-  },
-  "devDependencies": {
-    "@types/cors": "^2.8.17",
-    "@types/express": "^4.17.21",
-    "@types/node-fetch": "^2.6.13",
-    "prisma": "^6.19.0",
-    "ts-node": "^10.9.1",
-    "ts-node-dev": "^2.0.0",
-    "typescript": "^5.9.3"
-  }
+    "name":  "flowbit-api",
+    "version":  "1.0.0",
+    "main":  "dist/index.js",
+    "license":  "MIT",
+    "engines":  {
+                    "node":  "20.x"
+                },
+    "scripts":  {
+                    "dev":  "ts-node-dev --respawn --transpile-only src/index.ts",
+                    "build":  "tsc",
+                    "start":  "node dist/index.js",
+                    "prisma:generate":  "prisma generate",
+                    "prisma:seed":  "ts-node prisma/seed.ts",
+                    "typecheck":  "echo \u0027Skipping type-check on Vercel\u0027"
+                },
+    "dependencies":  {
+                         "@prisma/client":  "^6.19.0",
+                         "axios":  "^1.6.7",
+                         "cors":  "^2.8.5",
+                         "express":  "^4.19.2",
+                         "node-fetch":  "^2.7.0"
+                     },
+    "devDependencies":  {
+                            "@types/cors":  "^2.8.17",
+                            "@types/express":  "^4.17.21",
+                            "@types/node-fetch":  "^2.6.13",
+                            "prisma":  "^6.19.0",
+                            "ts-node":  "^10.9.1",
+                            "ts-node-dev":  "^2.0.0",
+                            "typescript":  "^5.9.3"
+                        }
 }

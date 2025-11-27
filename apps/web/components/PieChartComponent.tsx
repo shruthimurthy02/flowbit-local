@@ -63,3 +63,4 @@ export default function PieChartComponent({ data }: { data: any[] }) {
     </div>
   );
 }
+

@@ -89,3 +89,4 @@ export default function InvoiceTable({ data }: { data: InvoiceRow[] }) {
     </Table>
   );
 }
+
