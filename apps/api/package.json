@@ -12,7 +12,7 @@
                     "start":  "node dist/index.js",
                     "prisma:generate":  "prisma generate",
                     "prisma:seed":  "ts-node prisma/seed.ts",
-                    "typecheck":  "echo \u0027Skipping type-check on Vercel\u0027"
+                    "typecheck":  "echo \u0027Skipping backend typecheck on Vercel\u0027"
                 },
     "dependencies":  {
                          "@prisma/client":  "^6.19.0",

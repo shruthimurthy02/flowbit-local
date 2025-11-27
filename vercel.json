@@ -1,5 +1,6 @@
 {
-  "buildCommand": "SKIP_ENV_VALIDATION=1 SKIP_TS_CHECK=1 TURBO_FORCE=1 turbo build",
+  "version": 2,
+  "buildCommand": "SKIP_TS_CHECK=1 turbo build",
   "env": {
     "SKIP_TS_CHECK": "1"
   }
